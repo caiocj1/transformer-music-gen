@@ -27,8 +27,8 @@ if __name__ == '__main__':
 
     # Initialize data module
     data_module = MusicDataModule(
-        batch_size=32,
-        num_workers=2,
+        batch_size=16,
+        num_workers=0,
         max_samples=1
     )
     data_module.setup(stage='fit')
