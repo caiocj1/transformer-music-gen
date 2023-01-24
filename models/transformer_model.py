@@ -40,7 +40,7 @@ class TransformerModel(LightningModule):
                                           num_encoder_layers=3,
                                           num_decoder_layers=3,
                                           dim_feedforward=512)
-        self.linear = nn.Linear(512, vocab_size)
+        self.linear = nn.Linear(self.embedding_dims, vocab_size)
 
     def training_step(self, batch, batch_idx):
         """
