@@ -29,7 +29,7 @@ if __name__ == '__main__':
     data_module = MusicDataModule(
         batch_size=32,
         num_workers=8,
-        max_samples=20
+        max_samples=10
     )
     data_module.setup(stage='fit')
 
@@ -43,14 +43,15 @@ if __name__ == '__main__':
     version = args.version
     logger = TensorBoardLogger('.', version=version)
     model_ckpt = ModelCheckpoint(dirpath=f'lightning_logs/{version}/checkpoints',
-                                 save_top_k=0,
+                                 save_top_k=2,
+                                 monitor='loss_train',
                                  save_weights_only=True)
     lr_monitor = LearningRateMonitor()
 
     # Trainer
     trainer = Trainer(accelerator='auto',
                       devices=1 if torch.cuda.is_available() else None,
-                      max_epochs=72,
+                      max_epochs=5,
                       val_check_interval=3000,
                       callbacks=[model_ckpt, lr_monitor],
                       logger=logger)
