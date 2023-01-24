@@ -1,0 +1,7 @@
+TrainingParams:
+
+DatasetParams:
+  input_seq_len: 4096
+
+ModelParams:
+  embedding_dims: 512
