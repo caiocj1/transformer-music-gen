@@ -28,8 +28,8 @@ if __name__ == '__main__':
     # Initialize data module
     data_module = MusicDataModule(
         batch_size=8,
-        num_workers=2,
-        max_samples=1
+        num_workers=0,
+        max_samples=None
     )
     data_module.setup(stage='fit')
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     trainer = Trainer(accelerator='auto',
                       devices=1 if torch.cuda.is_available() else None,
                       max_epochs=72,
-                      val_check_interval=300,
+                      val_check_interval=3000,
                       callbacks=[model_ckpt, lr_monitor],
                       logger=logger)
     trainer.fit(model, data_module)
