@@ -126,12 +126,9 @@ class TransformerModel(LightningModule):
         """
         loss_func = nn.CrossEntropyLoss(reduction='none')
 
-        loss = loss_func(logits, target.long())
+        loss = loss_func(logits, target.long())[:, -self.num_predict_steps:]
 
-        mask = torch.zeros(loss.shape, device=loss.device)
-        mask[:, -self.num_predict_steps:] = 1
-
-        return loss * mask
+        return loss
 
     def configure_optimizers(self):
         """
