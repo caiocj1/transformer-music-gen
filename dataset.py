@@ -66,6 +66,7 @@ class MusicDataModule(LightningDataModule):
         dataset_params = params['DatasetParams']
 
         self.input_seq_len = dataset_params['input_seq_len']
+        self.num_predict_steps = dataset_params['num_predict_steps']
 
     def setup(self, stage: str = None):
         """
@@ -130,7 +131,7 @@ class MusicDataModule(LightningDataModule):
             midi = MidiFile(os.path.join(self.dataset_path, path))
             tokens = self.tokenizer(midi)
 
-            for j in range(len(tokens[0]) - self.input_seq_len + 1):
+            for j in range(0, len(tokens[0]), self.num_predict_steps):
                 midi_dict[i] = defaultdict()
 
                 # Associate sequence to midi
@@ -141,7 +142,8 @@ class MusicDataModule(LightningDataModule):
 
                 # Pad sequence if too short
                 if len(midi_dict[i]['input_seq']) < self.input_seq_len:
-                    midi_dict[i]['input_seq'] += [0] * (self.input_seq_len - len(midi_dict[i]['input_seq']))
+                    midi_dict[i]['input_seq'] = np.concatenate((midi_dict[i]['input_seq'],
+                                                                [0] * (self.input_seq_len - len(midi_dict[i]['input_seq']))))
 
                 i += 1
 

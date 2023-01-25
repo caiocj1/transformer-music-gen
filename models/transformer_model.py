@@ -24,9 +24,11 @@ class TransformerModel(LightningModule):
         config_path = os.path.join(os.getcwd(), './config.yaml')
         with open(config_path) as f:
             params = yaml.load(f, Loader=SafeLoader)
+        dataset_params = params['DatasetParams']
         model_params = params['ModelParams']
 
         self.embedding_dims = model_params['embedding_dims']
+        self.num_predict_steps = dataset_params['num_predict_steps']
 
     def build_model(self, vocab_size: int):
         """
@@ -93,7 +95,7 @@ class TransformerModel(LightningModule):
         """
         logits = self.forward(batch)
 
-        loss = self.calc_loss(logits, batch['input_seq'][:, 1:])
+        loss = self.calc_loss(logits, batch['input_seq'][:, self.num_predict_steps:])
 
         metrics = self.calc_metrics(logits, batch)
 
@@ -108,8 +110,8 @@ class TransformerModel(LightningModule):
         """
         x_embedded = self.embed_layer(batch['input_seq'])
         input = self.positional_enc(x_embedded)
-        src = input[:, :-1]
-        tgt = input[:, 1:]
+        src = input[:, :-self.num_predict_steps]
+        tgt = input[:, self.num_predict_steps:]
         out = self.transformer(src, tgt)
         logits = torch.transpose(self.linear(out), 1, 2)
 
@@ -126,7 +128,10 @@ class TransformerModel(LightningModule):
 
         loss = loss_func(logits, target.long())
 
-        return loss
+        mask = torch.zeros(loss.shape, device=loss.device)
+        mask[:, -self.num_predict_steps:] = 1
+
+        return loss * mask
 
     def configure_optimizers(self):
         """
