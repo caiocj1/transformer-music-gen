@@ -38,9 +38,9 @@ class TransformerModel(LightningModule):
         self.embed_layer = nn.Embedding(num_embeddings=vocab_size, embedding_dim=self.embedding_dims)
         self.positional_enc = PositionalEncoding(d_model=self.embedding_dims)
         self.transformer = nn.Transformer(d_model=self.embedding_dims,
-                                          nhead=4,
-                                          num_encoder_layers=3,
-                                          num_decoder_layers=3,
+                                          #nhead=4,
+                                          #num_encoder_layers=3,
+                                          #num_decoder_layers=3,
                                           dim_feedforward=512)
         self.linear = nn.Linear(self.embedding_dims, vocab_size)
 
@@ -95,7 +95,7 @@ class TransformerModel(LightningModule):
         """
         logits = self.forward(batch)
 
-        loss = self.calc_loss(logits, batch['input_seq'][:, self.num_predict_steps:])
+        loss = self.calc_loss(logits, batch['input_seq'][:, -self.num_predict_steps:])
 
         metrics = self.calc_metrics(logits, batch)
 
@@ -113,7 +113,7 @@ class TransformerModel(LightningModule):
         src = input[:, :-self.num_predict_steps]
         tgt = input[:, self.num_predict_steps:]
         out = self.transformer(src, tgt)
-        logits = torch.transpose(self.linear(out), 1, 2)
+        logits = torch.transpose(self.linear(out), 1, 2)[..., -self.num_predict_steps:]
 
         return logits
 
@@ -124,9 +124,9 @@ class TransformerModel(LightningModule):
         :param target: tensor of ground truths (batch_size)
         :return: tensor of losses (batch_size)
         """
-        loss_func = nn.CrossEntropyLoss(reduction='none')
+        loss_fn = nn.CrossEntropyLoss(reduction='none')
 
-        loss = loss_func(logits, target.long())[:, -self.num_predict_steps:]
+        loss = loss_fn(logits, target.long())
 
         return loss
 
