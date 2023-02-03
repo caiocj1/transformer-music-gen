@@ -35,7 +35,8 @@ class MusicDataModule(LightningDataModule):
         pitch_range = range(21, 109)
         beat_res = {(0, 4): 8, (4, 12): 4}
         nb_velocities = 32
-        additional_tokens = {'Chord': True, 'Rest': True, 'Tempo': True, 'Program': False, 'TimeSignature': False,
+        additional_tokens = {'Chord': True, 'Rest': True, 'Tempo': True,
+                             'Program': False, 'TimeSignature': False,
                              'rest_range': (2, 8),  # (half, 8 beats)
                              'nb_tempos': 32,  # nb of tempo bins
                              'tempo_range': (40, 250)}  # (min, max)
@@ -138,12 +139,17 @@ class MusicDataModule(LightningDataModule):
                 midi_dict[i]['midi_filename'] = path
 
                 # Get current sequence
-                midi_dict[i]['input_seq'] = np.array(tokens[0][j:j + self.input_seq_len])
-
+                midi_dict[i]['src'] = np.array(tokens[0][j:j + self.input_seq_len])
                 # Pad sequence if too short
-                if len(midi_dict[i]['input_seq']) < self.input_seq_len:
-                    midi_dict[i]['input_seq'] = np.concatenate((midi_dict[i]['input_seq'],
-                                                                [0] * (self.input_seq_len - len(midi_dict[i]['input_seq']))))
+                if len(midi_dict[i]['src']) < self.input_seq_len:
+                    midi_dict[i]['src'] = np.concatenate((midi_dict[i]['src'],
+                                                         [0] * (self.input_seq_len - len(midi_dict[i]['src']))))
+
+                midi_dict[i]['tgt'] = np.array(tokens[0][j + self.input_seq_len:
+                                                         j + self.input_seq_len + self.num_predict_steps])
+                if len(midi_dict[i]['tgt']) < self.num_predict_steps:
+                    midi_dict[i]['tgt'] = np.concatenate((midi_dict[i]['tgt'],
+                                                         [0] * (self.input_seq_len - len(midi_dict[i]['tgt']))))
 
                 i += 1
 

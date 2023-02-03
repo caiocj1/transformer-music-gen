@@ -41,7 +41,8 @@ class TransformerModel(LightningModule):
                                           #nhead=4,
                                           #num_encoder_layers=3,
                                           #num_decoder_layers=3,
-                                          dim_feedforward=512)
+                                          dim_feedforward=512,
+                                          batch_first=True)
         self.linear = nn.Linear(self.embedding_dims, vocab_size)
 
     def training_step(self, batch, batch_idx):
@@ -95,25 +96,27 @@ class TransformerModel(LightningModule):
         """
         logits = self.forward(batch)
 
-        loss = self.calc_loss(logits, batch['input_seq'][:, -self.num_predict_steps:])
+        loss = self.calc_loss(logits, batch['tgt'])
 
         metrics = self.calc_metrics(logits, batch)
 
         return loss, metrics
 
-    def forward(self, batch):
+    def forward(self, batch, tgt_mask=None):
         """
         Pass text embedding through convolutional layers. Concatenate result with base features and pass through final
         MLP to get predictions of a batch.
         :param batch: tuple (X, y), where the shape of X is (batch_size, 23) and of y is (batch_size)
         :return: predictions: tensor of shape (batch_size)
         """
-        x_embedded = self.embed_layer(batch['input_seq'])
-        input = self.positional_enc(x_embedded)
-        src = input[:, :-self.num_predict_steps]
-        tgt = input[:, self.num_predict_steps:]
-        out = self.transformer(src, tgt)
-        logits = torch.transpose(self.linear(out), 1, 2)[..., -self.num_predict_steps:]
+        src = self.embed_layer(batch['src'])
+        src = self.positional_enc(src)
+
+        tgt = self.embed_layer(batch['tgt'])
+        tgt = self.positional_enc(tgt)
+
+        out = self.transformer(src, tgt, tgt_mask=tgt_mask)
+        logits = torch.transpose(self.linear(out), 1, 2)
 
         return logits
 
