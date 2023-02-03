@@ -149,7 +149,7 @@ class MusicDataModule(LightningDataModule):
                                                          j + self.input_seq_len + self.num_predict_steps])
                 if len(midi_dict[i]['tgt']) < self.num_predict_steps:
                     midi_dict[i]['tgt'] = np.concatenate((midi_dict[i]['tgt'],
-                                                         [0] * (self.input_seq_len - len(midi_dict[i]['tgt']))))
+                                                         [0] * (self.num_predict_steps - len(midi_dict[i]['tgt']))))
 
                 i += 1
 
