@@ -139,17 +139,17 @@ class MusicDataModule(LightningDataModule):
                 midi_dict[i]['midi_filename'] = path
 
                 # Get current sequence
-                midi_dict[i]['src'] = np.array(tokens[0][j:j + self.input_seq_len])
+                midi_dict[i]['src'] = np.array(tokens[0][j:j + self.input_seq_len]).astype(int)
                 # Pad sequence if too short
                 if len(midi_dict[i]['src']) < self.input_seq_len:
                     midi_dict[i]['src'] = np.concatenate((midi_dict[i]['src'],
-                                                         [0] * (self.input_seq_len - len(midi_dict[i]['src']))))
+                                                         [0] * (self.input_seq_len - len(midi_dict[i]['src'])))).astype(int)
 
                 midi_dict[i]['tgt'] = np.array(tokens[0][j + self.input_seq_len:
-                                                         j + self.input_seq_len + self.num_predict_steps])
+                                                         j + self.input_seq_len + self.num_predict_steps]).astype(int)
                 if len(midi_dict[i]['tgt']) < self.num_predict_steps:
                     midi_dict[i]['tgt'] = np.concatenate((midi_dict[i]['tgt'],
-                                                         [0] * (self.num_predict_steps - len(midi_dict[i]['tgt']))))
+                                                         [0] * (self.num_predict_steps - len(midi_dict[i]['tgt'])))).astype(int)
 
                 i += 1
 
