@@ -121,7 +121,8 @@ class TransformerModel(LightningModule):
         tgt_emb = self.embed_layer(tgt_input)
         tgt_emb = self.positional_enc(tgt_emb)
 
-        out = self.transformer(src_emb, tgt_emb, src_mask, tgt_mask, None, src_padding_mask, tgt_padding_mask, src_padding_mask)
+        #out = self.transformer(src_emb, tgt_emb, src_mask, tgt_mask, None, src_padding_mask, tgt_padding_mask, src_padding_mask)
+        out = self.transformer(src_emb, tgt_emb)
         logits = torch.transpose(self.linear(out), 1, 2)
 
         return logits
