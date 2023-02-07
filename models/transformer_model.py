@@ -96,26 +96,32 @@ class TransformerModel(LightningModule):
         """
         logits = self.forward(batch)
 
-        loss = self.calc_loss(logits, batch['tgt'])
+        loss = self.calc_loss(logits, batch['tgt'][:, self.num_predict_steps:])
 
         metrics = self.calc_metrics(logits, batch)
 
         return loss, metrics
 
-    def forward(self, batch, tgt_mask=None):
+    def forward(self, batch):
         """
         Pass text embedding through convolutional layers. Concatenate result with base features and pass through final
         MLP to get predictions of a batch.
         :param batch: tuple (X, y), where the shape of X is (batch_size, 23) and of y is (batch_size)
         :return: predictions: tensor of shape (batch_size)
         """
-        src = self.embed_layer(batch['src'])
-        src = self.positional_enc(src)
+        src = batch['src']
+        tgt = batch['tgt']
 
-        tgt = self.embed_layer(batch['tgt'])
-        tgt = self.positional_enc(tgt)
+        tgt_input = tgt[:, :-self.num_predict_steps]
+        src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = self.create_mask(src, tgt_input)
 
-        out = self.transformer(src, tgt, tgt_mask=tgt_mask)
+        src_emb = self.embed_layer(src)
+        src_emb = self.positional_enc(src_emb)
+
+        tgt_emb = self.embed_layer(tgt_input)
+        tgt_emb = self.positional_enc(tgt_emb)
+
+        out = self.transformer(src_emb, tgt_emb, src_mask, tgt_mask, None, src_padding_mask, tgt_padding_mask, src_padding_mask)
         logits = torch.transpose(self.linear(out), 1, 2)
 
         return logits
@@ -165,3 +171,19 @@ class TransformerModel(LightningModule):
 
         for key in metrics:
             self.log(key + '_' + type, metrics[key], on_step=on_step, on_epoch=True, logger=True)
+
+    def generate_square_subsequent_mask(self, sz):
+        mask = (torch.triu(torch.ones((sz, sz))) == 1).transpose(0, 1)
+        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        return mask
+
+    def create_mask(self, src, tgt):
+        src_seq_len = src.shape[1]
+        tgt_seq_len = tgt.shape[1]
+
+        tgt_mask = self.generate_square_subsequent_mask(tgt_seq_len)
+        src_mask = torch.zeros((src_seq_len, src_seq_len)).type(torch.bool)
+
+        src_padding_mask = (src == 0)
+        tgt_padding_mask = (tgt == 0)
+        return src_mask, tgt_mask, src_padding_mask, tgt_padding_mask
