@@ -186,4 +186,5 @@ class TransformerModel(LightningModule):
 
         src_padding_mask = (src == 0)
         tgt_padding_mask = (tgt == 0)
-        return src_mask, tgt_mask, src_padding_mask, tgt_padding_mask
+        return src_mask.to(self.device), tgt_mask.to(self.device),\
+               src_padding_mask.to(self.device), tgt_padding_mask.to(self.device)
