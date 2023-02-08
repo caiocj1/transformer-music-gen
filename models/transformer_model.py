@@ -134,7 +134,7 @@ class TransformerModel(LightningModule):
         :param target: tensor of ground truths (batch_size)
         :return: tensor of losses (batch_size)
         """
-        loss_fn = nn.CrossEntropyLoss(reduction='none')
+        loss_fn = nn.CrossEntropyLoss(reduction='none', ignore_index=0)
 
         loss = loss_fn(logits, target.long())
 
