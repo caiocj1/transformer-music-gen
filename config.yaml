@@ -1,7 +1,7 @@
 TrainingParams:
 
 DatasetParams:
-  input_seq_len: 2048
+  input_seq_len: 1024
   num_predict_steps: 1
 
 ModelParams:
