@@ -38,10 +38,10 @@ class TorchTransformerModel(LightningModule):
         self.embed_layer = nn.Embedding(num_embeddings=vocab_size, embedding_dim=self.embedding_dims)
         self.positional_enc = PositionalEncoding(d_model=self.embedding_dims)
         self.transformer = nn.Transformer(d_model=self.embedding_dims,
-                                          nhead=1,
-                                          num_encoder_layers=1,
-                                          num_decoder_layers=1,
-                                          dim_feedforward=128,
+                                          nhead=8,
+                                          num_encoder_layers=6,
+                                          num_decoder_layers=6,
+                                          dim_feedforward=512,
                                           batch_first=True)
         self.linear = nn.Linear(self.embedding_dims, vocab_size)
 
