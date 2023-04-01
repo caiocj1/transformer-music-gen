@@ -31,7 +31,7 @@ if __name__ == '__main__':
     data_module = MusicDataModule(
         batch_size=8,
         num_workers=20,
-        max_samples=30
+        max_samples=3
     )
     data_module.setup(stage='fit')
 
@@ -39,8 +39,8 @@ if __name__ == '__main__':
     model = None
     if args.model == "torch":
         model = TorchTransformerModel(vocab_size=data_module.vocab_len)
-    elif args.model == "fast":
-        model = FastTransformerModel(vocab_size=data_module.vocab_len)
+    #elif args.model == "fast":
+    #    model = FastTransformerModel(vocab_size=data_module.vocab_len)
 
     if args.weights_path is not None:
         model = model.load_from_checkpoint(args.weights_path)
