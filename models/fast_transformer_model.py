@@ -5,13 +5,15 @@ import os
 import yaml
 from yaml import SafeLoader
 from collections import OrderedDict
+from fast_transformers.builders import TransformerEncoderBuilder, TransformerDecoderBuilder
 
 from models.nn_blocks import *
 
-class TorchTransformerModel(LightningModule):
+
+class FastTransformerModel(LightningModule):
 
     def __init__(self, vocab_size):
-        super(TorchTransformerModel, self).__init__()
+        super(FastTransformerModel, self).__init__()
         self.read_config()
 
         self.build_model(vocab_size)
@@ -37,12 +39,30 @@ class TorchTransformerModel(LightningModule):
         """
         self.embed_layer = nn.Embedding(num_embeddings=vocab_size, embedding_dim=self.embedding_dims)
         self.positional_enc = PositionalEncoding(d_model=self.embedding_dims)
-        self.transformer = nn.Transformer(d_model=self.embedding_dims,
-                                          nhead=4,
-                                          num_encoder_layers=3,
-                                          num_decoder_layers=3,
-                                          dim_feedforward=512,
-                                          batch_first=True)
+
+        builder = TransformerEncoderBuilder()
+        builder.n_layers = 3
+        builder.n_heads = 4
+        builder.feed_forward_dimensions = 128
+        builder.query_dimensions = 32
+        builder.value_dimensions = 32
+        builder.dropout = 0.1
+        builder.attention_dropout = 0.1
+        builder.attention_type = "linear"
+        self.transformer_encoder = builder.get()
+
+        # builder = TransformerDecoderBuilder()
+        # builder.n_layers = 3
+        # builder.n_heads = 4
+        # builder.feed_forward_dimensions = 128
+        # builder.query_dimensions = 32
+        # builder.value_dimensions = 32
+        # builder.dropout = 0.1
+        # builder.attention_dropout = 0.1
+        # builder.self_attention_type = "linear"
+        # builder.cross_attention_type = "linear"
+        # self.transformer_decoder = builder.get()
+
         self.linear = nn.Linear(self.embedding_dims, vocab_size)
 
     def training_step(self, batch, batch_idx):

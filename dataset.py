@@ -9,15 +9,14 @@ from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 from typing import Optional
 from collections import defaultdict
+from tqdm import tqdm
 
-from miditok import REMI
+from miditok.tokenizations import REMI
 from miditok.utils import get_midi_programs
 from miditoolkit import MidiFile
 
 class MusicDataModule(LightningDataModule):
     def __init__(self,
-            split_seed: int = 12345,  # split needs to be always the same for correct cross validation
-            num_splits: int = 10,
             batch_size: int = 32,
             num_workers: int = 0,
             max_samples: int = None):
@@ -35,14 +34,14 @@ class MusicDataModule(LightningDataModule):
         pitch_range = range(21, 109)
         beat_res = {(0, 4): 8, (4, 12): 4}
         nb_velocities = 32
-        additional_tokens = {'Chord': True, 'Rest': True, 'Tempo': True,
+        additional_tokens = {'Chord': False, 'Rest': True, 'Tempo': True,
                              'Program': False, 'TimeSignature': False,
                              'rest_range': (2, 8),  # (half, 8 beats)
                              'nb_tempos': 32,  # nb of tempo bins
                              'tempo_range': (40, 250)}  # (min, max)
 
-        self.tokenizer = REMI(pitch_range, beat_res, nb_velocities, additional_tokens, mask=True)
-        self.vocab_len = len(self.tokenizer.vocab)
+        self.tokenizer = REMI(pitch_range, beat_res, nb_velocities, additional_tokens)
+        self.vocab_len = self.tokenizer.len
 
         # Read csv
         read_csv = pd.read_csv(csv_path)
@@ -76,8 +75,8 @@ class MusicDataModule(LightningDataModule):
         :return: None
         """
         if stage == 'fit':
-            train_dict = self.get_sequences(self.read_train_df)
-            val_dict = self.get_sequences(self.read_val_df)
+            train_dict = self.get_sequences(self.read_train_df, "train")
+            val_dict = self.get_sequences(self.read_val_df, "val")
 
             self.data_train, self.data_val = train_dict, val_dict
 
@@ -119,7 +118,7 @@ class MusicDataModule(LightningDataModule):
                           num_workers=self.hparams.num_workers,
                           shuffle=False)
 
-    def get_sequences(self, df: pd.DataFrame):
+    def get_sequences(self, df: pd.DataFrame, type: str = "train"):
         """
         Formats the .csv read into an initial dataframe with base features.
         :param df: dataframe read from a csv file
@@ -128,7 +127,8 @@ class MusicDataModule(LightningDataModule):
         """
         midi_dict = defaultdict()
         i = 0
-        for path in df['midi_filename']:
+        print(f"Loading {type} dataset...")
+        for path in tqdm(df['midi_filename']):
             midi = MidiFile(os.path.join(self.dataset_path, path))
             tokens = self.tokenizer(midi)
 
@@ -139,13 +139,13 @@ class MusicDataModule(LightningDataModule):
                 midi_dict[i]['midi_filename'] = path
 
                 # Get current sequence
-                midi_dict[i]['src'] = np.array(tokens[0][j:j + self.input_seq_len]).astype(int)
+                midi_dict[i]['src'] = np.array(tokens[0].ids[j:j + self.input_seq_len]).astype(int)
                 # Pad sequence if too short
                 if len(midi_dict[i]['src']) < self.input_seq_len:
                     midi_dict[i]['src'] = np.concatenate((midi_dict[i]['src'],
                                                          [0] * (self.input_seq_len - len(midi_dict[i]['src'])))).astype(int)
 
-                midi_dict[i]['tgt'] = np.array(tokens[0][j + self.num_predict_steps:
+                midi_dict[i]['tgt'] = np.array(tokens[0].ids[j + self.num_predict_steps:
                                                          j + self.input_seq_len + self.num_predict_steps]).astype(int)
                 if len(midi_dict[i]['tgt']) < self.input_seq_len:
                     midi_dict[i]['tgt'] = np.concatenate((midi_dict[i]['tgt'],

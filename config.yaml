@@ -2,7 +2,7 @@ TrainingParams:
 
 DatasetParams:
   input_seq_len: 2048
-  num_predict_steps: 8
+  num_predict_steps: 1
 
 ModelParams:
   embedding_dims: 128
