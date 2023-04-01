@@ -3,7 +3,7 @@ import os
 import yaml
 
 from models.transformer_model import TorchTransformerModel
-from models.fast_transformer_model import FastTransformerModel
+#from models.fast_transformer_model import FastTransformerModel
 from dataset import MusicDataModule
 
 import torch.cuda
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     data_module = MusicDataModule(
         batch_size=8,
         num_workers=20,
-        max_samples=2
+        max_samples=30
     )
     data_module.setup(stage='fit')
 
