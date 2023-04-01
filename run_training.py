@@ -30,7 +30,7 @@ if __name__ == '__main__':
     # Initialize data module
     data_module = MusicDataModule(
         batch_size=8,
-        num_workers=20,
+        num_workers=8,
         max_samples=3
     )
     data_module.setup(stage='fit')
