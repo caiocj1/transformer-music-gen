@@ -33,7 +33,7 @@ if __name__ == '__main__':
         num_workers=0,
         max_samples=30
     )
-    data_module.setup(stage='fit')
+    #data_module.setup(stage='fit')
 
     # Initialize model
     model = None
